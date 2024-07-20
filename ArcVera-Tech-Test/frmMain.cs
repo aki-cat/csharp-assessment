@@ -100,9 +100,9 @@ namespace ArcVera_Tech_Test
 
         private void btnExportCsv_Click(object sender, EventArgs e)
         {
-            // if (dgImportedEra5.DataSource is DataTable dataTable)
+            if (dgImportedEra5.DataSource is DataTable dataTable)
             {
-                string raw = ParseToCsv( /*dataTable*/null);
+                string raw = ParseToCsv(dataTable);
                 using (var saveFileDialog = new SaveFileDialog())
                 {
                     saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
@@ -122,8 +122,30 @@ namespace ArcVera_Tech_Test
 
         private string ParseToCsv(DataTable dataTable)
         {
-            // TBD
-            return "some,list,stuff";
+            StringBuilder builder = new();
+
+            string[] rowBuffer = new string[dataTable.Columns.Count];
+            for (int i = 0; i < rowBuffer.Length; i++)
+            {
+                DataColumn col = dataTable.Columns[i];
+                rowBuffer[i] = col.ColumnName;
+            }
+
+            builder.AppendJoin(",", rowBuffer);
+            builder.Append("\n");
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                for (int i = 0; i < rowBuffer.Length; i++)
+                {
+                    rowBuffer[i] = row[i].ToString() ?? "";
+                }
+
+                builder.AppendJoin(",", rowBuffer);
+                builder.Append("\n");
+            }
+
+            return builder.ToString();
         }
 
         private void btnExportExcel_Click(object sender, EventArgs e)
