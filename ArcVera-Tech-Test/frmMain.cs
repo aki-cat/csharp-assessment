@@ -156,7 +156,37 @@ namespace ArcVera_Tech_Test
 
         private void btnExportExcel_Click(object sender, EventArgs e)
         {
-            // Complete here
+            ExportExcel();
+        }
+
+        private void ExportExcel()
+        {
+            if (dgImportedEra5.DataSource is not DataTable dataTable)
+            {
+                MessageBox.Show("No data to export. Import data first.");
+                return;
+            }
+
+            string raw = SerializeToExcel(dataTable);
+            using (var saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "Excel files (*.xlsx)|(*.xlsx)|All files (*.*)|*.*";
+                saveFileDialog.Title = "Save Excel File";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
+                    {
+                        fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
+                        fileStream.Close();
+                    }
+                }
+            }
+        }
+
+        private string SerializeToExcel(DataTable dataTable)
+        {
+            return "Test empty excel file.";
         }
     }
 }
