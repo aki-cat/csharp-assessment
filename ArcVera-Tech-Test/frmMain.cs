@@ -5,6 +5,7 @@ using System.Text;
 using OxyPlot;
 using OxyPlot.Series;
 using OxyPlot.Axes;
+using ClosedXML.Excel;
 
 namespace ArcVera_Tech_Test
 {
@@ -139,19 +140,15 @@ namespace ArcVera_Tech_Test
                 return;
             }
 
-            string raw = SerializeToExcel(dataTable);
+            XLWorkbook workbook = SerializeToExcel(dataTable);
             using (var saveFileDialog = new SaveFileDialog())
             {
-                saveFileDialog.Filter = "Excel files (*.xlsx)|(*.xlsx)|All files (*.*)|*.*";
+                saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
                 saveFileDialog.Title = "Save Excel File";
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
-                    {
-                        fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
-                        fileStream.Close();
-                    }
+                    workbook.SaveAs(saveFileDialog.FileName);
                 }
             }
         }
@@ -184,9 +181,41 @@ namespace ArcVera_Tech_Test
             return builder.ToString();
         }
 
-        private string SerializeToExcel(DataTable dataTable)
+        private XLWorkbook SerializeToExcel(DataTable dataTable)
         {
-            return "Test empty excel file.";
+            XLWorkbook workbook = new();
+            IXLWorksheet? sheet = workbook.Worksheets.Add("ExportedData");
+
+            for (int colIndex = 0; colIndex < dataTable.Columns.Count; colIndex++)
+            {
+                DataColumn column = dataTable.Columns[colIndex];
+                IXLCell headerCell = sheet.Cell(1, colIndex + 1);
+                Console.Out.WriteLine("{0}:{1} = {2}", 1, colIndex + 1, column.ColumnName);
+                headerCell.Value = column.ColumnName;
+
+                for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
+                {
+                    if (rowIndex >= 1048576 - 2)
+                    {
+                        // TBD: Put overflow data in new sheet
+                        break;
+                    }
+                    DataRow rowData = dataTable.Rows[rowIndex];
+                    string data = rowData[colIndex].ToString() ?? string.Empty;
+
+                    Console.Out.WriteLine("{0}:{1} = {2}", rowIndex + 2, colIndex + 1, data);
+                    IXLCell cell = sheet.Cell(rowIndex + 2, colIndex + 1);
+                    if (float.TryParse(data, out float num))
+                    {
+                        // TBD: Set color to negative data
+                        // cell.Style.Fill.BackgroundColor = XLColor.Salmon;
+                    }
+
+                    cell.Value = data;
+                }
+            }
+
+            return workbook;
         }
     }
 }
