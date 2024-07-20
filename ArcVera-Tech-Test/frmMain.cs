@@ -4,8 +4,6 @@ using System.Data;
 using System.Text;
 using OxyPlot;
 using OxyPlot.Series;
-using OxyPlot.WindowsForms;
-using DataColumn = System.Data.DataColumn;
 using OxyPlot.Axes;
 
 namespace ArcVera_Tech_Test
@@ -100,27 +98,35 @@ namespace ArcVera_Tech_Test
 
         private void btnExportCsv_Click(object sender, EventArgs e)
         {
-            if (dgImportedEra5.DataSource is DataTable dataTable)
-            {
-                string raw = ParseToCsv(dataTable);
-                using (var saveFileDialog = new SaveFileDialog())
-                {
-                    saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-                    saveFileDialog.Title = "Save CSV File";
+            ExportCsv();
+        }
 
-                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+        private void ExportCsv()
+        {
+            if (dgImportedEra5.DataSource is not DataTable dataTable)
+            {
+                MessageBox.Show("No data to export. Import data first.");
+                return;
+            }
+
+            string raw = SerializeToCsv(dataTable);
+            using (var saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+                saveFileDialog.Title = "Save CSV File";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
                     {
-                        using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
-                        {
-                            fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
-                            fileStream.Close();
-                        }
+                        fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
+                        fileStream.Close();
                     }
                 }
             }
         }
 
-        private string ParseToCsv(DataTable dataTable)
+        private string SerializeToCsv(DataTable dataTable)
         {
             StringBuilder builder = new();
 
