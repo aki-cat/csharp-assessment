@@ -101,6 +101,11 @@ namespace ArcVera_Tech_Test
             ExportCsv();
         }
 
+        private void btnExportExcel_Click(object sender, EventArgs e)
+        {
+            ExportExcel();
+        }
+
         private void ExportCsv()
         {
             if (dgImportedEra5.DataSource is not DataTable dataTable)
@@ -114,6 +119,31 @@ namespace ArcVera_Tech_Test
             {
                 saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
                 saveFileDialog.Title = "Save CSV File";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
+                    {
+                        fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
+                        fileStream.Close();
+                    }
+                }
+            }
+        }
+
+        private void ExportExcel()
+        {
+            if (dgImportedEra5.DataSource is not DataTable dataTable)
+            {
+                MessageBox.Show("No data to export. Import data first.");
+                return;
+            }
+
+            string raw = SerializeToExcel(dataTable);
+            using (var saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "Excel files (*.xlsx)|(*.xlsx)|All files (*.*)|*.*";
+                saveFileDialog.Title = "Save Excel File";
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -152,36 +182,6 @@ namespace ArcVera_Tech_Test
             }
 
             return builder.ToString();
-        }
-
-        private void btnExportExcel_Click(object sender, EventArgs e)
-        {
-            ExportExcel();
-        }
-
-        private void ExportExcel()
-        {
-            if (dgImportedEra5.DataSource is not DataTable dataTable)
-            {
-                MessageBox.Show("No data to export. Import data first.");
-                return;
-            }
-
-            string raw = SerializeToExcel(dataTable);
-            using (var saveFileDialog = new SaveFileDialog())
-            {
-                saveFileDialog.Filter = "Excel files (*.xlsx)|(*.xlsx)|All files (*.*)|*.*";
-                saveFileDialog.Title = "Save Excel File";
-
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
-                    {
-                        fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
-                        fileStream.Close();
-                    }
-                }
-            }
         }
 
         private string SerializeToExcel(DataTable dataTable)
