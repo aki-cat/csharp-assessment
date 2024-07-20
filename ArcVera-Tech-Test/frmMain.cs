@@ -1,6 +1,7 @@
 using Parquet.Schema;
 using Parquet;
 using System.Data;
+using System.Text;
 using OxyPlot;
 using OxyPlot.Series;
 using OxyPlot.WindowsForms;
@@ -99,7 +100,30 @@ namespace ArcVera_Tech_Test
 
         private void btnExportCsv_Click(object sender, EventArgs e)
         {
-            // Complete here
+            // if (dgImportedEra5.DataSource is DataTable dataTable)
+            {
+                string raw = ParseToCsv( /*dataTable*/null);
+                using (var saveFileDialog = new SaveFileDialog())
+                {
+                    saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+                    saveFileDialog.Title = "Save CSV File";
+
+                    if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
+                        {
+                            fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
+                            fileStream.Close();
+                        }
+                    }
+                }
+            }
+        }
+
+        private string ParseToCsv(DataTable dataTable)
+        {
+            // TBD
+            return "some,list,stuff";
         }
 
         private void btnExportExcel_Click(object sender, EventArgs e)
