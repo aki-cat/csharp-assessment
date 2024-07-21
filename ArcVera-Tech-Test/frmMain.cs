@@ -202,7 +202,7 @@ namespace ArcVera_Tech_Test
             {
                 if (colIndex >= ColumnLimit)
                 {
-                    throw new IndexOutOfRangeException();
+                    break;
                 }
 
                 DataColumn column = dataTable.Columns[colIndex];
@@ -214,7 +214,7 @@ namespace ArcVera_Tech_Test
                 {
                     if (rowIndex >= RowLimit)
                     {
-                        throw new IndexOutOfRangeException();
+                        break;
                     }
 
                     DataRow rowData = dataTable.Rows[rowIndex];
