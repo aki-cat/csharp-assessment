@@ -115,20 +115,16 @@ namespace ArcVera_Tech_Test
                 return;
             }
 
-            string raw = SerializeToCsv(dataTable);
-            using (var saveFileDialog = new SaveFileDialog())
-            {
-                saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-                saveFileDialog.Title = "Save CSV File";
+            SaveFileDialog saveFileDialog = new();
+            saveFileDialog.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
+            saveFileDialog.Title = "Save CSV File";
 
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    using (Stream fileStream = File.OpenWrite(saveFileDialog.FileName))
-                    {
-                        fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
-                        fileStream.Close();
-                    }
-                }
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string raw = SerializeToCsv(dataTable);
+                Stream fileStream = File.OpenWrite(saveFileDialog.FileName);
+                fileStream.Write(Encoding.UTF8.GetBytes(raw), 0, raw.Length);
+                fileStream.Close();
             }
         }
 
@@ -136,20 +132,36 @@ namespace ArcVera_Tech_Test
         {
             if (dgImportedEra5.DataSource is not DataTable dataTable)
             {
-                MessageBox.Show("No data to export. Import data first.");
+                MessageBox.Show(
+                    "No data to export. Import data first.",
+                    "Error: No data",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 return;
             }
 
-            XLWorkbook workbook = SerializeToExcel(dataTable);
-            using (var saveFileDialog = new SaveFileDialog())
-            {
-                saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
-                saveFileDialog.Title = "Save Excel File";
 
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            if (dataTable.Rows.Count > RowLimit || dataTable.Columns.Count > ColumnLimit)
+            {
+                if (MessageBox.Show(
+                        $"Data exceeds limit excel format limit of {RowLimit} rows or {ColumnLimit} columns. " +
+                        "Significant data might be cropped out. Continue anyway?",
+                        "Warning: Limit exceeded",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning) != DialogResult.Yes)
                 {
-                    workbook.SaveAs(saveFileDialog.FileName);
+                    return;
                 }
+            }
+
+            SaveFileDialog saveFileDialog = new();
+            saveFileDialog.Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*";
+            saveFileDialog.Title = "Save Excel File";
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                XLWorkbook workbook = SerializeToExcel(dataTable);
+                workbook.SaveAs(saveFileDialog.FileName);
             }
         }
 
@@ -188,6 +200,11 @@ namespace ArcVera_Tech_Test
 
             for (int colIndex = 0; colIndex < dataTable.Columns.Count; colIndex++)
             {
+                if (colIndex >= ColumnLimit)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+
                 DataColumn column = dataTable.Columns[colIndex];
                 IXLCell headerCell = sheet.Cell(1, colIndex + 1);
                 Console.Out.WriteLine("{0}:{1} = {2}", 1, colIndex + 1, column.ColumnName);
@@ -195,11 +212,11 @@ namespace ArcVera_Tech_Test
 
                 for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
                 {
-                    if (rowIndex >= 1048576 - 2)
+                    if (rowIndex >= RowLimit)
                     {
-                        // TBD: Put overflow data in new sheet
-                        break;
+                        throw new IndexOutOfRangeException();
                     }
+
                     DataRow rowData = dataTable.Rows[rowIndex];
                     string data = rowData[colIndex].ToString() ?? string.Empty;
 
@@ -217,5 +234,8 @@ namespace ArcVera_Tech_Test
 
             return workbook;
         }
+
+        private const uint RowLimit = 1048575;
+        private const uint ColumnLimit = 16384;
     }
 }
