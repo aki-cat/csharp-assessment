@@ -206,10 +206,10 @@ namespace ArcVera_Tech_Test
                 }
 
                 DataColumn column = dataTable.Columns[colIndex];
-                IXLCell headerCell = sheet.Cell(1, colIndex + 1);
-                Console.Out.WriteLine("{0}:{1} = {2}", 1, colIndex + 1, column.ColumnName);
-                headerCell.Value = column.ColumnName;
+                IXLCell firstCell = sheet.Cell(1, colIndex + 1);
+                firstCell.Value = column.ColumnName;
 
+                IXLCell nextCell = firstCell;
                 for (int rowIndex = 0; rowIndex < dataTable.Rows.Count; rowIndex++)
                 {
                     if (rowIndex >= RowLimit)
@@ -217,18 +217,17 @@ namespace ArcVera_Tech_Test
                         break;
                     }
 
+                    nextCell = nextCell.CellBelow();
+
                     DataRow rowData = dataTable.Rows[rowIndex];
-                    string data = rowData[colIndex].ToString() ?? string.Empty;
+                    firstCell.Value = rowData[colIndex].ToString() ?? string.Empty;
+                }
 
-                    Console.Out.WriteLine("{0}:{1} = {2}", rowIndex + 2, colIndex + 1, data);
-                    IXLCell cell = sheet.Cell(rowIndex + 2, colIndex + 1);
-                    if (float.TryParse(data, out float num))
-                    {
-                        // TBD: Set color to negative data
-                        // cell.Style.Fill.BackgroundColor = XLColor.Salmon;
-                    }
-
-                    cell.Value = data;
+                if (column.ColumnName == "u10")
+                {
+                    sheet.Range(firstCell, nextCell)
+                        .AddConditionalFormat().WhenLessThan(0.0)
+                        .Fill.SetBackgroundColor(XLColor.Salmon);
                 }
             }
 
